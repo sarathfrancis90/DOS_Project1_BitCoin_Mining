@@ -1,6 +1,5 @@
 import akka.actor._
 import akka.routing.{RoundRobinPool, RoundRobinRouter}
-import sun.plugin.navig.motif.Worker
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
