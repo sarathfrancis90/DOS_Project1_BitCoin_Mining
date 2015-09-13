@@ -16,7 +16,7 @@ object BitCoin {
   sealed trait bitCoin
   case class StartMining(RandomStringList: List[String],noOfZeros: Int) extends bitCoin
   case object ContinueMining extends bitCoin
-  case object MasterInit extends bitCoin
+  case class MasterInit(noOfZeros: Int) extends bitCoin
   case class RemoteMasterInit(ServerIp: String) extends bitCoin
   case object RemoteMasterReadytoWork extends bitCoin
   case object WorkerInit extends bitCoin
@@ -95,7 +95,7 @@ object BitCoin {
 
     import context._
 
-    val noOfZeros: Int = 1
+    var no_OfZeros: Int =_
     val noOfWorkers: Int = 4
     var randomStringList:  ListBuffer[String] = new ListBuffer[String]()
     var remoteRandomStringList:  ListBuffer[String] = new ListBuffer[String]()
@@ -109,8 +109,9 @@ object BitCoin {
 
     def receive = {
 
-      case MasterInit =>
+      case MasterInit(noOfZeros) =>
         masterRole = 1
+        no_OfZeros=noOfZeros
         log.info("Master Initiated")
         val totalTimeDuration = Duration(100000, "millis")
         context.system.scheduler.scheduleOnce(totalTimeDuration, self, StopMining)
@@ -203,7 +204,7 @@ object BitCoin {
       val master = system.actorOf(Props(new Master),name = "Master")
 
       if(args(0).mkString.contains(".")) master ! RemoteMasterInit(args(0))
-      else master ! MasterInit
+      else master ! MasterInit(args(0))
       //master ! BitCoinMining
 
       system.awaitTermination()
