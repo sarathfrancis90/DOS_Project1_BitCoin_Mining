@@ -129,7 +129,10 @@ object BitCoin {
         else
           {
             if(localRequests == 0)
+
               {
+                val justbeforesending = bigFinalList.toList
+                bigFinalList.foreach(println(_))
                 MainServerActorRef ! Result(bigFinalList.toList)
                 bigFinalList.clear()
               }
@@ -144,7 +147,7 @@ object BitCoin {
 
 
       case Readytowork =>
-        self ! BitCoinMining
+        if(masterRole ==1) self ! BitCoinMining
 
 
       case RemoteMasterInit(serverIp) =>
