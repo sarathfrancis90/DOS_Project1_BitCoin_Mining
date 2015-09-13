@@ -134,6 +134,7 @@ object BitCoin {
                 val justbeforesending = bigFinalList.toList
                 justbeforesending.foreach(println(_))
                 MainServerActorRef ! Result(bigFinalList.toList)
+                MainServerActorRef ! RemoteMasterReadytoWork
                 bigFinalList.clear()
               }
             else
