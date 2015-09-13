@@ -1,7 +1,8 @@
 import akka.actor._
-import akka.routing.RoundRobinRouter
+import akka.routing.{RoundRobinPool, RoundRobinRouter}
 import sun.plugin.navig.motif.Worker
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
@@ -10,11 +11,11 @@ import scala.util.Random
  */
 object BitCoin {
 
-  val noOfWorkers: Int = 4
+
 
 
   sealed trait bitCoin
-  case object StartMining extends bitCoin
+  case class StartMining(RandomStringList: ListBuffer[String]) extends bitCoin
   case object ContinueMining extends bitCoin
   case object BitCoinMining extends bitCoin
   case object Result extends  bitCoin
@@ -56,8 +57,13 @@ object BitCoin {
 
        def receive  = {
 
-       case StartMining =>
+        //Worker receives message from Master to start Mining the coins in the set of 80
+       case StartMining(randomStringList) =>
+
+         //saving reference of the Master
          masterRef = sender()
+
+
 
          self ! ContinueMining
 
@@ -65,7 +71,7 @@ object BitCoin {
 
          val noOfZeros = 4
          //log.info(s"received the message from Master")
-         val randomGeneratedString = createRandomString(10)
+         //val randomGeneratedString = createRandomString(10)
          //println(randomGeneratedString)
          val hashedCoin = SHA256(randomGeneratedString)
 
@@ -88,22 +94,29 @@ object BitCoin {
 
     import context._
 
-
+    val noOfZeros = 4
+    val noOfWorkers: Int = 4
+    var randomStringList: ListBuffer[String] = _
 
     def receive = {
 
       case Result =>
-
         //log.info("Final value from the worker")
         sender ! StartMining
 
       case BitCoinMining =>
 
         log.info("Starting bitCoin Mining")
+        //creating RoundRobinPool for managing Worker
+        val workerRouter:ActorRef = context.actorOf(RoundRobinPool(noOfWorkers).props(Props[Worker]),name = "workerRouter")
 
-        val workerRouter = context.actorOf(
-          Props[Worker].withRouter(RoundRobinRouter(noOfWorkers)),name = "workerRouter")
-        for( i<- 0 until  noOfWorkers) workerRouter ! StartMining
+
+        //Generate Random String prefixed with the GatorID and append into a list buffer
+        for(i <- 0 until 80) randomStringList+= createRandomString(10)
+        randomStringList.toList
+        //Sending the batch of 80 strings to the Workers in the roundrobin fashion
+        for( i<- 0 until  noOfWorkers) workerRouter ! StartMining(randomStringList)
+
         val totalTimeDuration = Duration(100000,"millis")
         context.system.scheduler.scheduleOnce(totalTimeDuration, self,StopMining)
 
@@ -121,6 +134,7 @@ object BitCoin {
       val system = ActorSystem("BitCoinMining")
 
       val master = system.actorOf(Props(new Master),name = "Master")
+
 
 
       master ! BitCoinMining

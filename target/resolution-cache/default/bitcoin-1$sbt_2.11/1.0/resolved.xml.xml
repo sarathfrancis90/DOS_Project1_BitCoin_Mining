@@ -4,7 +4,7 @@
 		module="bitcoin-1$sbt_2.11"
 		revision="1.0"
 		status="integration"
-		publication="20150910182300"
+		publication="20150910190258"
 	/>
 	<configurations>
 		<conf name="default" visibility="public"/>
