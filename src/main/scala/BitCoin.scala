@@ -132,7 +132,7 @@ object BitCoin {
 
               {
                 val justbeforesending = bigFinalList.toList
-                bigFinalList.foreach(println(_))
+                justbeforesending.foreach(println(_))
                 MainServerActorRef ! Result(bigFinalList.toList)
                 bigFinalList.clear()
               }
@@ -140,6 +140,7 @@ object BitCoin {
               {
                 localRequests -=1
                 finalList.foreach(bigFinalList += _)
+                finalList.foreach(println(_))
 
               }
           }
