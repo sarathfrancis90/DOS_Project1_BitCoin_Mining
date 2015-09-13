@@ -163,6 +163,7 @@ object BitCoin {
          MainServerActorRef ! RemoteMasterReadytoWork
 
       case RemoteMasterReadytoWork =>
+        println("remote master ready")
         for(i <- 0 until 800) remoteRandomStringList += createRandomString(12)
         val StringList = remoteRandomStringList.toList
         //for( i<- randomStringList.indices)println(randomStringList(i))
