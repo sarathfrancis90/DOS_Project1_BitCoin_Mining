@@ -95,7 +95,7 @@ object BitCoin {
 
     import context._
 
-    val noOfZeros: Int = 4
+    val noOfZeros: Int = 1
     val noOfWorkers: Int = 4
     var randomStringList:  ListBuffer[String] = new ListBuffer[String]()
     var remoteRandomStringList:  ListBuffer[String] = new ListBuffer[String]()
