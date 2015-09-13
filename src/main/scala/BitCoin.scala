@@ -113,7 +113,7 @@ object BitCoin {
         masterRole = 1
         no_OfZeros=noOfZeros
         log.info("Master Initiated")
-        val totalTimeDuration = Duration(100000, "millis")
+        val totalTimeDuration = Duration(30000, "millis")
         context.system.scheduler.scheduleOnce(totalTimeDuration, self, StopMining)
 
         //creating RoundRobinPool for managing Worker
@@ -124,11 +124,12 @@ object BitCoin {
       case Result(finalList) =>
         //Final value from the worker
         if (masterRole == 1) {
-        finalList.foreach(println)
+        //finalList.foreach(println)
         self ! BitCoinMining
         }
         else
           {
+            localRequests -=1
             if(localRequests == 0)
 
               {
@@ -140,7 +141,7 @@ object BitCoin {
               }
             else
               {
-                localRequests -=1
+
                 finalList.foreach(bigFinalList += _)
                 finalList.foreach(println(_))
 
