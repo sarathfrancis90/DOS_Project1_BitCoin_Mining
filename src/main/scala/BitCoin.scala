@@ -168,7 +168,7 @@ object BitCoin {
         for(i <- 0 until 800) remoteRandomStringList += createRandomString(12)
         val StringList = remoteRandomStringList.toList
         //for( i<- randomStringList.indices)println(randomStringList(i))
-        sender ! StartMiningfromMainServer(StringList,noOfZeros)
+        sender ! StartMiningfromMainServer(StringList,no_OfZeros)
         remoteRandomStringList.clear()
 
       case StartMiningfromMainServer(remoteStringList,noOfZeros) =>
@@ -185,7 +185,7 @@ object BitCoin {
         //for( i<- randomStringList.indices)println(randomStringList(i))
         val RandomStringsdividedtogroups = randomStringList.toList.grouped(randomStringList.length/noOfWorkers).toList
         //Sending the batch of 50 strings to the Workers in the round-robin fashion
-        for( i<- 0 until  noOfWorkers) workerRouter ! StartMining(RandomStringsdividedtogroups(i),noOfZeros)
+        for( i<- 0 until  noOfWorkers) workerRouter ! StartMining(RandomStringsdividedtogroups(i),no_OfZeros)
 
         randomStringList.clear()
 
@@ -204,7 +204,7 @@ object BitCoin {
       val master = system.actorOf(Props(new Master),name = "Master")
 
       if(args(0).mkString.contains(".")) master ! RemoteMasterInit(args(0))
-      else master ! MasterInit(args(0))
+      else master ! MasterInit(args(0).toInt)
       //master ! BitCoinMining
 
       system.awaitTermination()
