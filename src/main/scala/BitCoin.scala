@@ -22,7 +22,8 @@ object BitCoin {
   case object WorkerInit extends bitCoin
   case object Readytowork extends bitCoin
   case object BitCoinMining extends bitCoin
-  case class Result(RandomStringList: List[String]) extends  bitCoin
+  case class Result(MinedCoinList: List[String]) extends  bitCoin
+  case class ResultfromRemote(RemotelyMinedCoinList: List[String]) extends  bitCoin
   case object StopMining extends bitCoin
   case class StartMiningfromMainServer(remoteStringList: List[String],noOfZeros:Int)
 
@@ -124,7 +125,7 @@ object BitCoin {
       case Result(finalList) =>
         //Final value from the worker
         if (masterRole == 1) {
-        //finalList.foreach(println)
+        finalList.foreach(println)
         self ! BitCoinMining
         }
         else
@@ -135,7 +136,7 @@ object BitCoin {
               {
                 val justbeforesending = bigFinalList.toList
                 justbeforesending.foreach(println(_))
-                MainServerActorRef ! Result(bigFinalList.toList)
+                MainServerActorRef ! ResultfromRemote(bigFinalList.toList)
                 MainServerActorRef ! RemoteMasterReadytoWork
                 bigFinalList.clear()
               }
@@ -148,6 +149,8 @@ object BitCoin {
               }
           }
 
+      case ResultfromRemote(remotefinalList)  =>
+        remotefinalList.foreach(println)
 
 
       case Readytowork =>
@@ -165,7 +168,7 @@ object BitCoin {
          MainServerActorRef ! RemoteMasterReadytoWork
 
       case RemoteMasterReadytoWork =>
-        println("remote master ready")
+        //println("remote master ready")
         for(i <- 0 until 800) remoteRandomStringList += createRandomString(12)
         val StringList = remoteRandomStringList.toList
         //for( i<- randomStringList.indices)println(randomStringList(i))
