@@ -99,7 +99,7 @@ object BitCoin {
     var masterRole : Int = 0; // flag to check which master is sending messages 0 means main master
     var localRequests: Int=0   // flag to check if all the workers in the remote completed mining
     var bigFinalList: ListBuffer[String] = new ListBuffer[String]()  //llst to store the work of all workers in the remote and combine them and send to the main master
-
+    var serverResponseWaitCancellable: Cancellable = _
     def receive = {
       //Initiating Main master from the main
       case MasterInit(noOfZeros) =>
@@ -130,7 +130,7 @@ object BitCoin {
             MainServerActorRef ! ResultfromRemote(bigFinalList.toList)
             MainServerActorRef ! RemoteMasterReadytoWork
             val totalTimeDuration = Duration(3000, "millis")
-            context.system.scheduler.scheduleOnce(totalTimeDuration, self, StopMining)
+            serverResponseWaitCancellable = system.scheduler.scheduleOnce(totalTimeDuration, self, StopMining)
             bigFinalList.clear()
           }
           else
