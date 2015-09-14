@@ -10,9 +10,6 @@ import scala.util.Random
  */
 object BitCoin {
 
-
-
-
   sealed trait bitCoin
   case class StartMining(RandomStringList: List[String],noOfZeros: Int) extends bitCoin
   case object ContinueMining extends bitCoin
@@ -27,13 +24,14 @@ object BitCoin {
   case object StopMining extends bitCoin
   case class StartMiningfromMainServer(remoteStringList: List[String],noOfZeros:Int)
 
-  def SHA256(s: String): String = {
+  def SHA256(s: String): String =
+  {
     val m = java.security.MessageDigest.getInstance("SHA-256").digest(s.getBytes("UTF-8"))
     m.map("%02x".format(_)).mkString
   }
-  def createRandomString(stringLength:Int):String ={
+  def createRandomString(stringLength:Int):String =
+  {
     val randomString = Random.alphanumeric.take(stringLength).mkString
-    //println(randomString)
     "sarathfrancis90;" + randomString
   }
 
@@ -41,16 +39,14 @@ object BitCoin {
 
   def checkLeadingZeros(hashedCoin : String,leadingZeros: Int):Boolean = {
 
-
     if(hashedCoin.indexWhere(NonZerochar)>=leadingZeros)
       {
-        //println("success")
-        true
+       true
       }
 
-    else {
-      //println("failure")
-      false
+    else
+    {
+     false
 
     }
   }
@@ -64,7 +60,6 @@ object BitCoin {
 
         //Init message from master
         case WorkerInit =>
-          log.info("Worker initiated")
           //accepting the init meesage from the master and worker is ready to work
           sender ! Readytowork
 
@@ -73,12 +68,12 @@ object BitCoin {
           //for(i<-randomStringList.indices)log.info(randomStringList(i))
 
           //iterating through the random string list
-          for (i <- randomStringList.indices) {
-            //log.info(randomStringList(i))
-            //println(randomString)
+          for (i <- randomStringList.indices)
+          {
             val hashedCoin: String = SHA256(randomStringList(i))
             //log.info(randomStringList(i) + " " + hashedCoin)
-            if (checkLeadingZeros(hashedCoin, noOfZeros)) {
+            if (checkLeadingZeros(hashedCoin, noOfZeros))
+            {
               //sending hashed coins with required number of prefixed zeros to master
               val finalMinedCoin:String = randomStringList(i) + "  " + hashedCoin
               //log.info(finalMinedCoin)
@@ -96,85 +91,80 @@ object BitCoin {
 
     import context._
 
-    var no_OfZeros: Int =_
-    val noOfWorkers: Int = 4
-    var randomStringList:  ListBuffer[String] = new ListBuffer[String]()
-    var remoteRandomStringList:  ListBuffer[String] = new ListBuffer[String]()
-    var workerRouter : ActorRef =_
-    var remoteWorkerRouter: ActorRef =_
-    var MainServerActorRef :ActorSelection =_
-    var masterRole : Int = 0;
-    var onlyOnce: Int = 0
-    var localRequests: Int=0
-    var bigFinalList: ListBuffer[String] = new ListBuffer[String]()
+    var no_OfZeros: Int =_ //variable to store number of prefixed zeros
+    val noOfWorkers: Int = 4 //Number of worker Actors
+    var randomStringList:  ListBuffer[String] = new ListBuffer[String]() //List for storing strings generated strings in the main Server
+    var remoteRandomStringList:  ListBuffer[String] = new ListBuffer[String]()  ////List for storing strings generated strings in the remote Server
+    var workerRouter : ActorRef =_  //Round Robin Router for work allocation in the main server
+    var remoteWorkerRouter: ActorRef =_  //Round Robin Router for work allocation in the main server
+    var MainServerActorRef :ActorSelection =_ // variable for storing the main master reference in the remote master
+    var masterRole : Int = 0; // flag to check which master is sending messages 0 means main master
+    var localRequests: Int=0   // flag to check if all the workers in the remote completed mining
+    var bigFinalList: ListBuffer[String] = new ListBuffer[String]()  //llst to store the work of all workers in the remote and combine them and send to the main master
 
     def receive = {
-
+      //Initiating Main master from the main
       case MasterInit(noOfZeros) =>
         masterRole = 1
         no_OfZeros=noOfZeros
-        log.info("Master Initiated")
+        //setting the timeDuration for execution. Schedule Stopmining message after a specific time to stop mining
         val totalTimeDuration = Duration(30000, "millis")
         context.system.scheduler.scheduleOnce(totalTimeDuration, self, StopMining)
 
         //creating RoundRobinPool for managing Worker
         workerRouter = context.actorOf(RoundRobinPool(noOfWorkers).props(Props[Worker]), name = "workerRouter")
-
+        //Initiating all the workers
         for (i <- 0 until noOfWorkers) workerRouter ! WorkerInit
 
+       //Result from local workers
       case Result(finalList) =>
         //Final value from the worker
-        if (masterRole == 1) {
-        finalList.foreach(println)
-        self ! BitCoinMining
+        if (masterRole == 1)
+        {
+          finalList.foreach(println)
+          self ! BitCoinMining
         }
         else
+        {
+          localRequests -=1
+          if(localRequests == 0)
           {
-            localRequests -=1
-            if(localRequests == 0)
-
-              {
-                val justbeforesending = bigFinalList.toList
-                justbeforesending.foreach(println(_))
-                MainServerActorRef ! ResultfromRemote(bigFinalList.toList)
-                MainServerActorRef ! RemoteMasterReadytoWork
-                bigFinalList.clear()
-              }
-            else
-              {
-
-                finalList.foreach(bigFinalList += _)
-                finalList.foreach(println(_))
-
-              }
+            MainServerActorRef ! ResultfromRemote(bigFinalList.toList)
+            MainServerActorRef ! RemoteMasterReadytoWork
+            bigFinalList.clear()
           }
+          else
+          {
+            finalList.foreach(bigFinalList += _)
+            finalList.foreach(println(_))
 
+          }
+        }
+
+      //print the combined result from the remote Master
       case ResultfromRemote(remotefinalList)  =>
         remotefinalList.foreach(println)
 
-
+      //self message from the workers after the  Init
       case Readytowork =>
         if(masterRole ==1) self ! BitCoinMining
 
-
+       // Initiating remote Master with the Main server Ip Address
       case RemoteMasterInit(serverIp) =>
-
-
-        log.info("RemoteMasterInitiated")
+        println("RemoteMasterInitiated")
         MainServerActorRef = context.actorSelection("akka.tcp://BitCoinMining@" + serverIp + ":2552/user/Master")
         remoteWorkerRouter = context.actorOf(RoundRobinPool(noOfWorkers).props(Props[Worker]),name = "workerRouter")
         for( i<- 0 until  noOfWorkers) remoteWorkerRouter ! WorkerInit
+        MainServerActorRef ! RemoteMasterReadytoWork
 
-         MainServerActorRef ! RemoteMasterReadytoWork
-
+      //message from remote server telling that it is ready
       case RemoteMasterReadytoWork =>
-        //println("remote master ready")
         for(i <- 0 until 800) remoteRandomStringList += createRandomString(12)
         val StringList = remoteRandomStringList.toList
-        //for( i<- randomStringList.indices)println(randomStringList(i))
         sender ! StartMiningfromMainServer(StringList,no_OfZeros)
         remoteRandomStringList.clear()
 
+      //Message from Main Server to start Mining
       case StartMiningfromMainServer(remoteStringList,noOfZeros) =>
         val remoteRandomStringsdividedtogroups = remoteStringList.toList.grouped(remoteStringList.length/noOfWorkers).toList
         for( i<- 0 until  noOfWorkers){
@@ -182,34 +172,35 @@ object BitCoin {
           localRequests+=1
         }
 
-
+      //Message to start Mining
       case BitCoinMining =>
         //Generate Random String prefixed with the GatorID and append into a list buffer
         for(i <- 0 until 200) randomStringList += createRandomString(12)
-        //for( i<- randomStringList.indices)println(randomStringList(i))
         val RandomStringsdividedtogroups = randomStringList.toList.grouped(randomStringList.length/noOfWorkers).toList
         //Sending the batch of 50 strings to the Workers in the round-robin fashion
         for( i<- 0 until  noOfWorkers) workerRouter ! StartMining(RandomStringsdividedtogroups(i),no_OfZeros)
-
         randomStringList.clear()
 
 
-
+      //Stop Mining Message to shutdown system
       case StopMining =>
-        log.info("Mining stopped")
+        println("Mining stopped")
         context.system.shutdown()
     }
 
   }
   def main (args: Array[String]) {
 
+      //Creating Actor System
       val system = ActorSystem("BitCoinMining")
 
+      //Creating Master Actor
       val master = system.actorOf(Props(new Master),name = "Master")
 
+      //Initiating Remote Master based on the command line arguments
       if(args(0).mkString.contains(".")) master ! RemoteMasterInit(args(0))
       else master ! MasterInit(args(0).toInt)
-      //master ! BitCoinMining
+
 
       system.awaitTermination()
 
