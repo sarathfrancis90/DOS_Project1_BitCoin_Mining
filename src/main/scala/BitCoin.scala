@@ -76,9 +76,7 @@ object BitCoin {
             {
               //sending hashed coins with required number of prefixed zeros to master
               val finalMinedCoin:String = randomStringList(i) + "  " + hashedCoin
-              //log.info(finalMinedCoin)
               finalMinedCoinList+=finalMinedCoin
-             //masterRef !Readytowork
             }
           }
           val FinalList = finalMinedCoinList.toList
@@ -131,6 +129,8 @@ object BitCoin {
           {
             MainServerActorRef ! ResultfromRemote(bigFinalList.toList)
             MainServerActorRef ! RemoteMasterReadytoWork
+            val totalTimeDuration = Duration(3000, "millis")
+            context.system.scheduler.scheduleOnce(totalTimeDuration, self, StopMining)
             bigFinalList.clear()
           }
           else
