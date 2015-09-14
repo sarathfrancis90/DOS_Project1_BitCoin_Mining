@@ -156,6 +156,8 @@ object BitCoin {
         remoteWorkerRouter = context.actorOf(RoundRobinPool(noOfWorkers).props(Props[Worker]),name = "workerRouter")
         for( i<- 0 until  noOfWorkers) remoteWorkerRouter ! WorkerInit
         MainServerActorRef ! RemoteMasterReadytoWork
+        val totalTimeDuration = Duration(3000, "millis")
+        responseCancellable = system.scheduler.scheduleOnce(totalTimeDuration, self, StopMining)
 
       //message from remote server telling that it is ready
       case RemoteMasterReadytoWork =>
