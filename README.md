@@ -9,22 +9,27 @@ This README would normally document whatever steps are necessary to get your app
 * Distributed implementation that uses network nodes to find bitcoins
 
 
-### How do I get set up? ###
+### Project Group ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+* Sarath Francis
+* Shuyi Shang
 
-### Contribution guidelines ###
+### How do you get the set Up ###
 
-* Writing tests
-* Code review
-* Other guidelines
+####On node acting as server, enter the following commands in terminal at the project root
+
+* $ sbt
+* $ compile
+* $ run 4
+
+####On node acting as worker, enter the following
+
+* $ sbt
+* $ compile
+* $ run <server-ip-adress>
+
+
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+Sarath Francis
