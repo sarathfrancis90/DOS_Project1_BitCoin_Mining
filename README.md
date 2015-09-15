@@ -32,4 +32,4 @@ This README would normally document whatever steps are necessary to get your app
 
 ### Who do I talk to? ###
 
-Sarath Francis
+Sarath Francis (sarathfrancis90@gmail.com)
